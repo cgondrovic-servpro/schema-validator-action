@@ -105,7 +105,7 @@ jobs:
     if: github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: your-org/schema-validator-action@v1
+      - uses: cgondrovic-servpro/schema-validator-action@v1
         with:
           preview-url: ${{ github.event.deployment_status.target_url }}
           paths: '/, /about, /products'
@@ -133,7 +133,7 @@ jobs:
     if: github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: your-org/schema-validator-action@v1
+      - uses: cgondrovic-servpro/schema-validator-action@v1
         with:
           preview-url: ${{ github.event.deployment_status.target_url }}
           paths: '/, /about, /products, /contact'
@@ -152,7 +152,7 @@ jobs:
     if: github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: your-org/schema-validator-action@v1
+      - uses: cgondrovic-servpro/schema-validator-action@v1
         with:
           preview-url: ${{ github.event.deployment_status.target_url }}
           paths: '/, /about'
@@ -174,7 +174,7 @@ jobs:
   validate-schema:
     runs-on: ubuntu-latest
     steps:
-      - uses: your-org/schema-validator-action@v1
+      - uses: cgondrovic-servpro/schema-validator-action@v1
         with:
           preview-url: ${{ github.event.inputs.url }}
           paths: '/'

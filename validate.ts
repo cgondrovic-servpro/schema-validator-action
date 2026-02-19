@@ -644,7 +644,10 @@ const run = async (): Promise<void> => {
   }
 
   const fetchHtml: FetchHtml = browser
-    ? ((b) => (url: string) => fetchWithBrowser(b, url, waitMs))(browser)
+    ? (
+        (b) => (url: string) =>
+          fetchWithBrowser(b, url, waitMs)
+      )(browser)
     : (url) => fetch(url, FETCH_OPTIONS).then((res) => res.text());
 
   const baseUrl = parseBaseUrl();

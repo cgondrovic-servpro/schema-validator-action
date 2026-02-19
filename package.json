@@ -1,0 +1,30 @@
+{
+  "name": "local-schema-validator",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "validate": "bun run validate.ts",
+    "build:vocab": "bun run scripts/build-vocabulary.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "check": "bun run typecheck && bun run lint",
+    "prepare": "lefthook install"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "fast-xml-parser": "^4.3.2",
+    "cheerio": "^1.0.0-rc.12",
+    "schema-dts": "^1.1.5",
+    "ajv": "^8.12.0",
+    "csv-parse": "^5.5.6"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.3",
+    "@types/node": "^20.10.0",
+    "lefthook": "^2.1.1",
+    "playwright": "^1.40.0",
+    "typescript": "^5.3.3"
+  }
+}

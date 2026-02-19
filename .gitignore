@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Generated Files
+*.generated.ts
+schema-report.html
+schema-report.pdf
+
+# OS Artifacts
+.DS_Store
+Thumbs.db
+
+# IDE Configuration
+.cursor/
+
+# Playwright
+test-results/
+playwright-report/
+/playwright/.cache/
+
+# Environment & Logs
+.env
+.env.*
+*.log
+
+# TypeScript Build
+dist/
+*.tsbuildinfo

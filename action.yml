@@ -1,0 +1,88 @@
+name: 'Schema.org Validator'
+description: 'Validate JSON-LD structured data on preview deployments - fails build on errors'
+author: 'Your Organization'
+branding:
+  icon: 'check-circle'
+  color: 'green'
+
+inputs:
+  preview-url:
+    description: 'Preview deployment URL (e.g., https://preview-abc123.vercel.app)'
+    required: true
+  paths:
+    description: 'Comma-separated paths to validate (e.g., /, /about, /products)'
+    required: false
+    default: '/'
+  browser:
+    description: 'Use browser mode for JavaScript-rendered SPAs (React, Gatsby, etc.)'
+    required: false
+    default: 'false'
+  strict:
+    description: 'Enable strict validation (warns on unknown types/properties)'
+    required: false
+    default: 'false'
+  wait:
+    description: 'Wait time in ms after page load in browser mode'
+    required: false
+    default: '2000'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: bun install
+
+    - name: Install Playwright browsers (if browser mode)
+      if: inputs.browser == 'true'
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: bunx playwright install chromium --with-deps
+
+    - name: Validate schemas
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        PREVIEW_URL: ${{ inputs.preview-url }}
+        PATHS: ${{ inputs.paths }}
+        USE_BROWSER: ${{ inputs.browser }}
+        USE_STRICT: ${{ inputs.strict }}
+        WAIT_MS: ${{ inputs.wait }}
+      run: |
+        # Normalize preview URL (remove trailing slash)
+        PREVIEW_URL="${PREVIEW_URL%/}"
+        
+        # Convert comma-separated paths to CSV file
+        echo "url" > /tmp/schema-urls.csv
+        IFS=',' read -ra PATH_ARRAY <<< "$PATHS"
+        for path in "${PATH_ARRAY[@]}"; do
+          # Trim whitespace from path
+          path=$(echo "$path" | xargs)
+          # Ensure path starts with /
+          if [[ ! "$path" =~ ^/ ]]; then
+            path="/$path"
+          fi
+          echo "${PREVIEW_URL}${path}" >> /tmp/schema-urls.csv
+        done
+        
+        echo "Validating the following URLs:"
+        cat /tmp/schema-urls.csv
+        echo ""
+        
+        # Build command arguments
+        ARGS="--ci --csv /tmp/schema-urls.csv"
+        
+        if [ "$USE_BROWSER" = "true" ]; then
+          ARGS="$ARGS --browser --wait $WAIT_MS"
+        fi
+        
+        if [ "$USE_STRICT" = "true" ]; then
+          ARGS="$ARGS --strict"
+        fi
+        
+        # Run validator
+        bun run validate -- $ARGS

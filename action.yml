@@ -25,6 +25,9 @@ inputs:
     description: 'Wait time in ms after page load in browser mode'
     required: false
     default: '2000'
+  netlify-site:
+    description: 'Netlify site name for constructing preview URLs (deploy-preview-{PR}--{site}.netlify.app)'
+    required: false
 
 runs:
   using: 'composite'

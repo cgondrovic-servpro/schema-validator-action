@@ -120,6 +120,7 @@ jobs:
 | `browser` | No | `false` | Use browser mode for SPAs |
 | `strict` | No | `false` | Enable strict validation |
 | `wait` | No | `2000` | Wait time (ms) in browser mode |
+| `netlify-site` | No | — | Netlify site name (for URL pattern documentation) |
 
 ### Vercel Example
 
@@ -140,7 +141,9 @@ jobs:
           browser: true
 ```
 
-### Netlify Example
+### Netlify Example (deployment_status)
+
+If your Netlify GitHub App is configured to emit `deployment_status` events:
 
 ```yaml
 name: Schema Validation
@@ -158,6 +161,66 @@ jobs:
           paths: '/, /about'
           strict: true
 ```
+
+### Netlify Example (status event)
+
+For setups where `deployment_status` events aren't available (e.g., using Render or other integrations to trigger Netlify builds), use the `status` event instead. This approach is more efficient for long build times as the workflow only runs after Netlify completes.
+
+Netlify deploy preview URLs follow a predictable pattern: `https://deploy-preview-{PR_NUMBER}--{site}.netlify.app`
+
+```yaml
+name: Schema Validation
+on:
+  status:
+
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: write
+
+jobs:
+  validate-schema:
+    name: Validate JSON-LD Schema
+    runs-on: ubuntu-latest
+    # Only run when Netlify deploy succeeds
+    # Adjust the context to match your Netlify status check name
+    if: |
+      github.event.state == 'success' && 
+      contains(github.event.context, 'netlify')
+    
+    steps:
+      - name: Find PR for this commit
+        id: find-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER=$(gh pr list \
+            --repo ${{ github.repository }} \
+            --search "${{ github.sha }}" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+          
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No open PR found for commit ${{ github.sha }}"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "Found PR #$PR_NUMBER"
+      
+      - name: Validate schemas
+        if: steps.find-pr.outputs.skip != 'true'
+        uses: cgondrovic-servpro/schema-validator-action@v1
+        with:
+          preview-url: https://deploy-preview-${{ steps.find-pr.outputs.pr_number }}--your-site.netlify.app
+          paths: '/, /services, /about'
+          browser: true
+          wait: 3000
+```
+
+**Finding your Netlify context name:** Open any PR, scroll to the status checks, and note the Netlify check name (e.g., `netlify/your-site/deploy-preview`). Update the `if` condition to match exactly for better precision.
 
 ### Manual Trigger (for testing)
 
@@ -183,11 +246,23 @@ jobs:
 
 ### How It Works
 
+**With `deployment_status` event (Vercel, some Netlify setups):**
+
 1. Preview deployment completes (Vercel, Netlify, etc.)
 2. `deployment_status` event triggers the workflow
 3. Action validates JSON-LD on each specified path
 4. If errors found → `exit(1)` → workflow fails → PR blocked (with branch protection)
 5. If all pass → `exit(0)` → green checkmark
+
+**With `status` event (Netlify with custom integrations):**
+
+1. PR is created/updated
+2. Netlify builds the site (can take many minutes)
+3. Netlify sets commit status to `success` when done
+4. GitHub `status` event fires, triggering the workflow
+5. Workflow finds PR number from commit SHA, constructs preview URL
+6. Action validates JSON-LD on each specified path
+7. Results determine pass/fail status
 
 ## Development
 

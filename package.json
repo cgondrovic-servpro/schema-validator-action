@@ -10,7 +10,7 @@
     "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
     "check": "bun run typecheck && bun run lint",
-    "prepare": "lefthook install"
+    "prepare": "[ -d .git ] && lefthook install || true"
   },
   "dependencies": {
     "node-fetch": "^3.3.2",
